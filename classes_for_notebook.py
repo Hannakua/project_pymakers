@@ -1,5 +1,7 @@
 import pickle
 from collections import UserDict
+import re
+
 
 class Field:
     def __init__(self, value=None):
@@ -23,13 +25,14 @@ class Hashtag(Field):
 
     @Field.value.setter
     def value(self, hashtag):
-        if not hashtag.isalpha():
-            raise ValueError
+        if hashtag[0] != '#':
+            raise ValueError('hashtag must be starts with #')
+        if not re.match(r"^\#[\w\d]+$", hashtag):
+            raise ValueError('Hashtag value is not right it can be only alphabet letters (a-z), numbers (0-9) and _')
         super(Hashtag, Hashtag).value.__set__(self, hashtag)
 
     def __repr__(self) -> str:
         return f"Hashtag({self.value})"
-
 
 
 class Note(Field):
@@ -46,8 +49,11 @@ class RecordNote:
 
     def add_note(self, note):
         if isinstance(note, str):
-            note = Note(note)
-        self.notes.append(note)
+            self.notes.append(Note(note))
+        elif isinstance(note, Note):
+            self.notes.append(note)
+        else:
+            raise ValueError('New note is not string value or Note() object')
 
     def edit_note(self, old_note, new_note):
         for note in self.notes:
@@ -69,7 +75,10 @@ class RecordNote:
             return None
 
     def __str__(self):
-        return f"hashtag: {self.hashtag}: notes: {self.notes}"
+        result = self.hashtag.value
+        if self.notes:
+            result += ': ' + ', '.join([note.value for note in self.notes])
+        return result
 
     def __repr__(self):
         return f"Record({self.hashtag!r}, {self.notes!r})"
@@ -77,6 +86,7 @@ class RecordNote:
 
 class Notebook(UserDict):
     def __init__(self, record=None):
+        super().__init__()
         self.data = {}
         if record is not None:
             self.add_record(record)
@@ -103,6 +113,19 @@ class Notebook(UserDict):
         except FileNotFoundError:
             pass
 
+    def search(self, value: str):
+        result_by_note = []
+        result_by_tag = []
+        for tag, record in self.data.items():
+            if value in tag:
+                result_by_tag.append(record)
+                continue
+            for note in record.notes:
+                if value in note.value:
+                    result_by_note.append(record)
+                    break
+        return result_by_tag + result_by_note
+
     def __iter__(self):
         return iter(self.data.values())
 
@@ -113,3 +136,9 @@ class Notebook(UserDict):
             return record
         else:
             raise StopIteration
+
+    def __str__(self):
+        result = ''
+        for tag in self.data:
+            result += str(self.data[tag]) + '\n'
+        return result
