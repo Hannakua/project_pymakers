@@ -50,12 +50,7 @@ def add_user(name, contact_details):
             record = Record(Name(name), birthday=Birthday(contact_details))
         else:
             phone = Phone(contact_details)
-            if phone.is_valid_phone():
-                record = Record(Name(name), phone=phone)
-                phonebook.add_record(record)
-                return "Contact successfully added"
-            else:
-                return "Invalid phone number format"
+            record = Record(Name(name), phone=phone)
         phonebook.add_record(record)
         return "Contact successfully added"
 
@@ -79,10 +74,10 @@ def update_user(record, contact_details):
         record.add_birthday(Birthday(contact_details))
     else:
         phone = Phone(contact_details)
-        if phone.is_valid_phone():
-            record.add_phone(phone)
-        else:
-            return "Invalid phone number format"
+        # if phone.is_valid_phone():
+        record.add_phone(phone)
+        # else:
+        #     return "Invalid phone number format"
     return "Contact details added successfully"
 
 
