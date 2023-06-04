@@ -4,6 +4,7 @@ from classes_for_notebook import Notebook, RecordNote, Hashtag
 phonebook = AddressBook()
 notebook = Notebook()
 
+
 def input_error(func):
     def inner(*args, **kwargs):
         try:
@@ -11,12 +12,13 @@ def input_error(func):
             return result
         except KeyError:
             return "There is no such name"
-        except ValueError:
-            return "Give me name and phone/email/birthday please"
+        except ValueError as error:
+            return str(error)
         except IndexError:
             return "Enter user name"
         except TypeError:
             return "Incorrect values"
+
     return inner
 
 
@@ -55,15 +57,18 @@ def add_user(name, contact_details):
         phonebook.add_record(record)
         return "Contact successfully added"
 
-def add_note(hashtag, note):
+
+@input_error
+def add_note(hashtag, note=None):
     record = notebook.get_records(hashtag)
     if record:
         record.add_note(note)
-        return "Contact details added successfully"
+        return f'Note added to {hashtag} successfully'
     else:
         record = RecordNote(Hashtag(hashtag), note=note)
         notebook.add_record(record)
-        return "Contact successfully added" 
+        return f'New {hashtag} added successfully'
+
 
 def update_user(record, contact_details):
     if '@' in contact_details:
@@ -76,7 +81,8 @@ def update_user(record, contact_details):
             record.add_phone(phone)
         else:
             return "Invalid phone number format"
-    return "Contact details added successfully"  
+    return "Contact details added successfully"
+
 
 @input_error
 def change_phone(name, new_phone, index=0):
@@ -90,6 +96,7 @@ def change_phone(name, new_phone, index=0):
     else:
         return "There is no such name"
 
+
 def change_note(hashtag, index, new_note):
     record = notebook.get_records(hashtag)
     if record:
@@ -100,7 +107,8 @@ def change_note(hashtag, index, new_note):
             return "Invalid note number index"
     else:
         return "There is no such hashtag"
-    
+
+
 @input_error
 def show_all():
     if not phonebook.data:
@@ -121,18 +129,23 @@ def show_all():
         result += '\n'
     return result.rstrip()
 
+
 @input_error
-def show_all_note():
+def show_notes(criteria=None):
     if not notebook.data:
         return "The notebook is empty"
-    result = ""
-    for hashtag, record in notebook.data.items():
-        result += f"{hashtag}: "
-        if record.notes:
-            notes = ", ".join([note.value for note in record.notes])
-            result += f"notes: {notes}"
-        result += "\n"
-    return result.rstrip()
+    if not criteria:
+        return str(notebook)
+
+    records = notebook.search(criteria)
+    if not records:
+        return "No note records found for " + criteria
+
+    result = ''
+    for record in records:
+        result += str(record) + '\n'
+    return result
+
 
 @input_error
 def get_note(hashtag):
@@ -146,6 +159,7 @@ def get_note(hashtag):
             return f"No notes found for {hashtag}"
     else:
         return "There is no such hashtag"
+
 
 @input_error
 def get_birthday(name):
@@ -199,7 +213,7 @@ def search_by_criteria(criteria):
                 result.append(record)
             elif any(criteria in phone.value for phone in record.phones):
                 result.append(record)
-            
+
         if result:
             result_strings = []
             for record in result:
@@ -247,6 +261,7 @@ def iteration_note(page=1, count_hashtag=1):
 
     return result.rstrip()
 
+
 @input_error
 def iteration(page=1, page_size=3):
     if not phonebook.data:
@@ -278,7 +293,7 @@ commands = {
     "note": add_note,
     'change': change_phone,
     'show all': show_all,
-    'show notes': show_all_note,
+    'show notes': show_notes,
     "phone": get_phone_number,
     'exit': exit,
     'good bye': exit,
@@ -294,21 +309,21 @@ commands = {
 filename1 = "address_book.txt"
 filename2 = "note_book.txt"
 
+
 def command_parser(user_input):
     command, *args = user_input.strip().split(' ')
     try:
         handler = commands[command.lower()]
-        
+
     except KeyError:
         if args:
             command_part2, *args = args[0].strip().split(' ', 1)
-            command = command + ' ' + command_part2      
+            command = command + ' ' + command_part2
         handler = commands.get(command.lower(), unknown_command)
 
-
-    if "change_note" in handler.__name__:
+    if command == "modify":
         args = [args[0], args[1], ' '.join(args[2:])]
-    elif "note" in handler.__name__:
+    elif command == "note":
         try:
             args = [args[0]] + [' '.join(args[1:])]
         except IndexError:
@@ -322,9 +337,9 @@ def main():
 
     while True:
         user_input = input(">>> ")
-        handler, args= command_parser(user_input)
+        handler, args = command_parser(user_input)
         result = handler(*args)
-        
+
         if not result:
             print('Goodbye!')
             phonebook.save_address_book(filename1)

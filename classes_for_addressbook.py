@@ -22,7 +22,7 @@ class Name(Field):
     @Field.value.setter
     def value(self, name):
         if not name.isalpha():
-            raise ValueError
+            raise ValueError("Give me name and phone/email/birthday please")
         Field.value.fset(self, name)
 
     def __repr__(self) -> str:
@@ -57,7 +57,7 @@ class Birthday(Field):
         try:
             dt = datetime.strptime(birthday, '%d.%m.%Y')
         except (ValueError, TypeError):
-            raise ValueError
+            raise ValueError("Give me name and phone/email/birthday please")
         Field.value.fset(self, dt.date())
 
     def __repr__(self) -> str:
