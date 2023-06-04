@@ -1,7 +1,8 @@
-from classes import Record, AddressBook, Name, Email, Birthday, Phone
+from classes_for_addressbook import Record, AddressBook, Name, Email, Birthday, Phone
+from classes_for_notebook import Notebook, RecordNote, Hashtag
 
 phonebook = AddressBook()
-
+notebook = Notebook()
 
 def input_error(func):
     def inner(*args, **kwargs):
@@ -53,7 +54,16 @@ def add_user(name, contact_details):
                 return "Invalid phone number format"
         phonebook.add_record(record)
         return "Contact successfully added"
-        
+
+def add_note(hashtag, note):
+    record = notebook.get_records(hashtag)
+    if record:
+        record.add_note(note)
+        return "Contact details added successfully"
+    else:
+        record = RecordNote(Hashtag(hashtag), note=note)
+        notebook.add_record(record)
+        return "Contact successfully added" 
 
 def update_user(record, contact_details):
     if '@' in contact_details:
@@ -68,7 +78,6 @@ def update_user(record, contact_details):
             return "Invalid phone number format"
     return "Contact details added successfully"  
 
-
 @input_error
 def change_phone(name, new_phone, index=0):
     record = phonebook.get_records(name)
@@ -81,7 +90,17 @@ def change_phone(name, new_phone, index=0):
     else:
         return "There is no such name"
 
-
+def change_note(hashtag, index, new_note):
+    record = notebook.get_records(hashtag)
+    if record:
+        if record.notes and '0' <= str(index) < str(len(record.notes)):
+            record.edit_note(old_note=record.notes[int(index)].value, new_note=new_note)
+            return "Note updated successfully"
+        else:
+            return "Invalid note number index"
+    else:
+        return "There is no such hashtag"
+    
 @input_error
 def show_all():
     if not phonebook.data:
@@ -102,6 +121,31 @@ def show_all():
         result += '\n'
     return result.rstrip()
 
+@input_error
+def show_all_note():
+    if not notebook.data:
+        return "The notebook is empty"
+    result = ""
+    for hashtag, record in notebook.data.items():
+        result += f"{hashtag}: "
+        if record.notes:
+            notes = ", ".join([note.value for note in record.notes])
+            result += f"notes: {notes}"
+        result += "\n"
+    return result.rstrip()
+
+@input_error
+def get_note(hashtag):
+    record = notebook.get_records(hashtag)
+    if record:
+        notes = [f"{note}\n----------------------\n" for note in record.notes]
+        if notes:
+            notes_str = "".join(notes)
+            return f"{hashtag}:\n{notes_str}"
+        else:
+            return f"No notes found for {hashtag}"
+    else:
+        return "There is no such hashtag"
 
 @input_error
 def get_birthday(name):
@@ -118,9 +162,12 @@ def get_birthday(name):
 def get_phone_number(name):
     record = phonebook.get_records(name)
     if record:
-        phones = [f"{record.get_name()}: {phone}" for phone in record.phones]
-        result = "\n".join(phones)
-        return result
+        if record.phones:
+            phones = [f"{record.get_name()}: {phone}" for phone in record.phones]
+            result = "\n".join(phones)
+            return result
+        else:
+            return "No phone number found for that name"
     else:
         return "There is no such name"
 
@@ -129,8 +176,14 @@ def get_phone_number(name):
 def get_email(name):
     record = phonebook.get_records(name)
     if record:
-        result = f"{record.get_name()}: {record.get_email(0)}"
-        return result
+        if record.emails:
+            emails = [f"{record.get_name()}: {email}" for email in record.emails]
+            result = "\n".join(emails)
+            return result
+
+        else:
+            return "No email found for that name"
+
     else:
         return "There is no such name"
 
@@ -142,7 +195,7 @@ def search_by_criteria(criteria):
         for record in phonebook.data.values():
             if criteria in record.get_name():
                 result.append(record)
-            elif record.get_email(0) and criteria in record.get_email(0).value:
+            elif any(criteria in email.value for email in record.emails):
                 result.append(record)
             elif any(criteria in phone.value for phone in record.phones):
                 result.append(record)
@@ -154,8 +207,9 @@ def search_by_criteria(criteria):
                 if record.phones:
                     phones = ", ".join([phone.value for phone in record.phones])
                     contact_info += f": {phones}"
-                if record.get_email(0):
-                    contact_info += f", Email: {record.get_email(0).value}"
+                if record.emails:
+                    emails = ", ".join([email.value for email in record.emails])
+                    contact_info += f", Email: {emails}"
                 if record.get_birthday():
                     contact_info += f", Birthday: {str(record.get_birthday().value)}"
                     days_left = record.days_to_birthday()
@@ -165,6 +219,33 @@ def search_by_criteria(criteria):
 
     return "No records found for that criteria"
 
+
+@input_error
+def iteration_note(page=1, count_hashtag=1):
+    if not notebook.data:
+        return "The notebook is empty"
+
+    page = int(page)
+    count_hashtag = int(count_hashtag)
+    start_index = (page - 1) * count_hashtag
+    end_index = start_index + count_hashtag
+
+    records = list(notebook)
+    total_pages = (len(records) + count_hashtag - 1) // count_hashtag
+
+    if page < 1 or page > total_pages:
+        return f"Invalid page number. Please enter a page number between 1 and {total_pages}"
+
+    result = ""
+    for record in records[start_index:end_index]:
+        result += f"{record.hashtag}:\n"
+        if record.notes:
+            notes = "\n".join([f"{note.value}\n---------------------" for note in record.notes])
+            result += f"\n{notes}\n"
+
+    result += f"Page {page}/{total_pages}"
+
+    return result.rstrip()
 
 @input_error
 def iteration(page=1, page_size=3):
@@ -194,8 +275,10 @@ def iteration(page=1, page_size=3):
 commands = {
     'hello': greeting,
     'add': add_user,
+    "note": add_note,
     'change': change_phone,
     'show all': show_all,
+    'show notes': show_all_note,
     "phone": get_phone_number,
     'exit': exit,
     'good bye': exit,
@@ -204,30 +287,48 @@ commands = {
     "birthday": get_birthday,
     'search': search_by_criteria,
     "page": iteration,
+    "notes": iteration_note,
+    "modify": change_note,
 }
 
-filename = "address_book.txt"
+filename1 = "address_book.txt"
+filename2 = "note_book.txt"
+
+def command_parser(user_input):
+    command, *args = user_input.strip().split(' ')
+    try:
+        handler = commands[command.lower()]
+        
+    except KeyError:
+        if args:
+            command_part2, *args = args[0].strip().split(' ', 1)
+            command = command + ' ' + command_part2      
+        handler = commands.get(command.lower(), unknown_command)
+
+
+    if "change_note" in handler.__name__:
+        args = [args[0], args[1], ' '.join(args[2:])]
+    elif "note" in handler.__name__:
+        try:
+            args = [args[0]] + [' '.join(args[1:])]
+        except IndexError:
+            pass
+    return handler, args
+
 
 def main():
-    phonebook.load_from_file(filename)
+    phonebook.load_address_book(filename1)
+    notebook.load_notes(filename2)
+
     while True:
-        command, *args = input(">>> ").strip().lower().split(' ')
-        if commands.get(command):
-            handler = commands.get(command)
-            if args:
-                result = handler(*args)
-            else:
-                result = handler()
-        elif args and commands.get(command + ' ' + args[0]):
-            command = command + ' ' + args[0]
-            args = args[1:]
-            handler = commands.get(command)
-            result = handler(*args)
-        else:
-            result = unknown_command()
+        user_input = input(">>> ")
+        handler, args= command_parser(user_input)
+        result = handler(*args)
+        
         if not result:
             print('Goodbye!')
-            phonebook.save_to_file(filename)
+            phonebook.save_address_book(filename1)
+            notebook.save_notes(filename2)
             break
         print(result)
 
