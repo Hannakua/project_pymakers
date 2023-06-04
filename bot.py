@@ -1,6 +1,8 @@
-from classes import Record, AddressBook, Name, Email, Birthday, Phone
+from classes_for_addressbook import Record, AddressBook, Name, Email, Birthday, Phone
+from classes_for_notebook import Notebook, RecordNote, Hashtag
 
 phonebook = AddressBook()
+notebook = Notebook()
 
 
 def input_error(func):
@@ -10,12 +12,13 @@ def input_error(func):
             return result
         except KeyError:
             return "There is no such name"
-        except ValueError:
-            return "Give me name and phone/email/birthday please"
+        except ValueError as error:
+            return str(error)
         except IndexError:
             return "Enter user name"
         except TypeError:
             return "Incorrect values"
+
     return inner
 
 
@@ -32,6 +35,8 @@ def unknown_command():
 def exit():
     return None
 
+def help():
+    return " add name 0*********/example@email.com/dd.mm.yyyy - додати телефон/емейл/дату народження до контакту name\nnote hashtag note - створити нотатку за вказаним хештегом\nchange name new phone index - змінити номер телефону за вказаним інтексом(якщо не вказувати то зміниться перший)\nmodify hashtag index new_note - змінює нотатку за вказанім хешегом та індексом\nsearch criteria - пошук за вказаною критерією серед емейлів, телефонів та імен\nshow all - показати всі контакти\nshow notes - показати всі нотатки\nphone name - показати всі номера телефонів за вказаним ім'ям\nemail name - показати всі емейли за вказаним ім'ям\nbirthday name - показати дату народження з кількість днів що залишилась до нього\npage page_number number_of_contacts_per_page - показати всі контакти розділені по сторінкам, стандартно перша сторінка та 3 контакти\nnotes page_number number_of_hashtags- показати всі нотатки розділені по сторінкам, стандартно перша сторінка та всі нотаки за одним хештегом"
 
 @input_error
 def add_user(name, contact_details):
@@ -53,7 +58,19 @@ def add_user(name, contact_details):
                 return "Invalid phone number format"
         phonebook.add_record(record)
         return "Contact successfully added"
-        
+
+
+@input_error
+def add_note(hashtag, note=None):
+    record = notebook.get_records(hashtag)
+    if record:
+        record.add_note(note)
+        return f'Note added to {hashtag} successfully'
+    else:
+        record = RecordNote(Hashtag(hashtag), note=note)
+        notebook.add_record(record)
+        return f'New {hashtag} added successfully'
+
 
 def update_user(record, contact_details):
     if '@' in contact_details:
@@ -66,7 +83,7 @@ def update_user(record, contact_details):
             record.add_phone(phone)
         else:
             return "Invalid phone number format"
-    return "Contact details added successfully"  
+    return "Contact details added successfully"
 
 
 @input_error
@@ -80,6 +97,18 @@ def change_phone(name, new_phone, index=0):
             return "Invalid phone number index"
     else:
         return "There is no such name"
+
+
+def change_note(hashtag, index, new_note):
+    record = notebook.get_records(hashtag)
+    if record:
+        if record.notes and '0' <= str(index) < str(len(record.notes)):
+            record.edit_note(old_note=record.notes[int(index)].value, new_note=new_note)
+            return "Note updated successfully"
+        else:
+            return "Invalid note number index"
+    else:
+        return "There is no such hashtag"
 
 
 @input_error
@@ -104,6 +133,37 @@ def show_all():
 
 
 @input_error
+def show_notes(criteria=None):
+    if not notebook.data:
+        return "The notebook is empty"
+    if not criteria:
+        return str(notebook)
+
+    records = notebook.search(criteria)
+    if not records:
+        return "No note records found for " + criteria
+
+    result = ''
+    for record in records:
+        result += str(record) + '\n'
+    return result
+
+
+@input_error
+def get_note(hashtag):
+    record = notebook.get_records(hashtag)
+    if record:
+        notes = [f"{note}\n----------------------\n" for note in record.notes]
+        if notes:
+            notes_str = "".join(notes)
+            return f"{hashtag}:\n{notes_str}"
+        else:
+            return f"No notes found for {hashtag}"
+    else:
+        return "There is no such hashtag"
+
+
+@input_error
 def get_birthday(name):
     record = phonebook.get_records(name)
     if record:
@@ -118,9 +178,12 @@ def get_birthday(name):
 def get_phone_number(name):
     record = phonebook.get_records(name)
     if record:
-        phones = [f"{record.get_name()}: {phone}" for phone in record.phones]
-        result = "\n".join(phones)
-        return result
+        if record.phones:
+            phones = [f"{record.get_name()}: {phone}" for phone in record.phones]
+            result = "\n".join(phones)
+            return result
+        else:
+            return "No phone number found for that name"
     else:
         return "There is no such name"
 
@@ -129,8 +192,14 @@ def get_phone_number(name):
 def get_email(name):
     record = phonebook.get_records(name)
     if record:
-        result = f"{record.get_name()}: {record.get_email(0)}"
-        return result
+        if record.emails:
+            emails = [f"{record.get_name()}: {email}" for email in record.emails]
+            result = "\n".join(emails)
+            return result
+
+        else:
+            return "No email found for that name"
+
     else:
         return "There is no such name"
 
@@ -142,11 +211,11 @@ def search_by_criteria(criteria):
         for record in phonebook.data.values():
             if criteria in record.get_name():
                 result.append(record)
-            elif record.get_email(0) and criteria in record.get_email(0).value:
+            elif any(criteria in email.value for email in record.emails):
                 result.append(record)
             elif any(criteria in phone.value for phone in record.phones):
                 result.append(record)
-            
+
         if result:
             result_strings = []
             for record in result:
@@ -154,8 +223,9 @@ def search_by_criteria(criteria):
                 if record.phones:
                     phones = ", ".join([phone.value for phone in record.phones])
                     contact_info += f": {phones}"
-                if record.get_email(0):
-                    contact_info += f", Email: {record.get_email(0).value}"
+                if record.emails:
+                    emails = ", ".join([email.value for email in record.emails])
+                    contact_info += f", Email: {emails}"
                 if record.get_birthday():
                     contact_info += f", Birthday: {str(record.get_birthday().value)}"
                     days_left = record.days_to_birthday()
@@ -164,6 +234,34 @@ def search_by_criteria(criteria):
             return "\n".join(result_strings)
 
     return "No records found for that criteria"
+
+
+@input_error
+def iteration_note(page=1, count_hashtag=1):
+    if not notebook.data:
+        return "The notebook is empty"
+
+    page = int(page)
+    count_hashtag = int(count_hashtag)
+    start_index = (page - 1) * count_hashtag
+    end_index = start_index + count_hashtag
+
+    records = list(notebook)
+    total_pages = (len(records) + count_hashtag - 1) // count_hashtag
+
+    if page < 1 or page > total_pages:
+        return f"Invalid page number. Please enter a page number between 1 and {total_pages}"
+
+    result = ""
+    for record in records[start_index:end_index]:
+        result += f"{record.hashtag}:\n"
+        if record.notes:
+            notes = "\n".join([f"{note.value}\n---------------------" for note in record.notes])
+            result += f"\n{notes}\n"
+
+    result += f"Page {page}/{total_pages}"
+
+    return result.rstrip()
 
 
 @input_error
@@ -193,9 +291,12 @@ def iteration(page=1, page_size=3):
 
 commands = {
     'hello': greeting,
+    'help': help,
     'add': add_user,
+    "note": add_note,
     'change': change_phone,
     'show all': show_all,
+    'show notes': show_notes,
     "phone": get_phone_number,
     'exit': exit,
     'good bye': exit,
@@ -204,30 +305,48 @@ commands = {
     "birthday": get_birthday,
     'search': search_by_criteria,
     "page": iteration,
+    "notes": iteration_note,
+    "modify": change_note,
 }
 
-filename = "address_book.txt"
+filename1 = "address_book.txt"
+filename2 = "note_book.txt"
+
+
+def command_parser(user_input):
+    command, *args = user_input.strip().split(' ')
+    try:
+        handler = commands[command.lower()]
+
+    except KeyError:
+        if args:
+            command_part2, *args = args[0].strip().split(' ', 1)
+            command = command + ' ' + command_part2
+        handler = commands.get(command.lower(), unknown_command)
+
+    if command == "modify":
+        args = [args[0], args[1], ' '.join(args[2:])]
+    elif command == "note":
+        try:
+            args = [args[0]] + [' '.join(args[1:])]
+        except IndexError:
+            pass
+    return handler, args
+
 
 def main():
-    phonebook.load_from_file(filename)
+    phonebook.load_address_book(filename1)
+    notebook.load_notes(filename2)
+
     while True:
-        command, *args = input(">>> ").strip().lower().split(' ')
-        if commands.get(command):
-            handler = commands.get(command)
-            if args:
-                result = handler(*args)
-            else:
-                result = handler()
-        elif args and commands.get(command + ' ' + args[0]):
-            command = command + ' ' + args[0]
-            args = args[1:]
-            handler = commands.get(command)
-            result = handler(*args)
-        else:
-            result = unknown_command()
+        user_input = input(">>> ")
+        handler, args = command_parser(user_input)
+        result = handler(*args)
+
         if not result:
             print('Goodbye!')
-            phonebook.save_to_file(filename)
+            phonebook.save_address_book(filename1)
+            notebook.save_notes(filename2)
             break
         print(result)
 
