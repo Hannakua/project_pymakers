@@ -35,6 +35,8 @@ def unknown_command():
 def exit():
     return None
 
+def help():
+    return " add name 0*********/example@email.com/dd.mm.yyyy - додати телефон/емейл/дату народження до контакту name\nnote hashtag note - створити нотатку за вказаним хештегом\nchange name new phone index - змінити номер телефону за вказаним інтексом(якщо не вказувати то зміниться перший)\nmodify hashtag index new_note - змінює нотатку за вказанім хешегом та індексом\nsearch criteria - пошук за вказаною критерією серед емейлів, телефонів та імен\nshow all - показати всі контакти\nshow notes - показати всі нотатки\nphone name - показати всі номера телефонів за вказаним ім'ям\nemail name - показати всі емейли за вказаним ім'ям\nbirthday name - показати дату народження з кількість днів що залишилась до нього\npage page_number number_of_contacts_per_page - показати всі контакти розділені по сторінкам, стандартно перша сторінка та 3 контакти\nnotes page_number number_of_hashtags- показати всі нотатки розділені по сторінкам, стандартно перша сторінка та всі нотаки за одним хештегом"
 
 @input_error
 def add_user(name, contact_details):
@@ -289,6 +291,7 @@ def iteration(page=1, page_size=3):
 
 commands = {
     'hello': greeting,
+    'help': help,
     'add': add_user,
     "note": add_note,
     'change': change_phone,
