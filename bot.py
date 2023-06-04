@@ -28,15 +28,43 @@ def greeting():
 
 
 def unknown_command():
-    return "Unknown command"
+    return "Enter a new command"
 
+def change_command(user_input):
+    while True:
+        choice = input('Unknown command. Do you want to change the command? \n(Yes/No): ')
+        
+        if choice.lower() == 'yes':
+            words = user_input.split(' ')
+            new_user_input = input('Repeat the command: ')
+            if len(words) == 1:
+                user_input = new_user_input + user_input[len(new_user_input)+1:]
+            elif len(words) >= 2:
+                user_input = ' '.join([new_user_input] + words[1:])
+            print(user_input)    
+            return user_input
+        elif choice.lower() == 'no':
+            return None
+        else:
+            print('Please enter "Yes" or "No".')
 
 @input_error
 def exit():
     return None
 
 def help():
-    return " add name 0*********/example@email.com/dd.mm.yyyy - додати телефон/емейл/дату народження до контакту name\nnote hashtag note - створити нотатку за вказаним хештегом\nchange name new phone index - змінити номер телефону за вказаним інтексом(якщо не вказувати то зміниться перший)\nmodify hashtag index new_note - змінює нотатку за вказанім хешегом та індексом\nsearch criteria - пошук за вказаною критерією серед емейлів, телефонів та імен\nshow all - показати всі контакти\nshow notes - показати всі нотатки\nphone name - показати всі номера телефонів за вказаним ім'ям\nemail name - показати всі емейли за вказаним ім'ям\nbirthday name - показати дату народження з кількість днів що залишилась до нього\npage page_number number_of_contacts_per_page - показати всі контакти розділені по сторінкам, стандартно перша сторінка та 3 контакти\nnotes page_number number_of_hashtags- показати всі нотатки розділені по сторінкам, стандартно перша сторінка та всі нотаки за одним хештегом"
+    return "add name 0*********/example@email.com/dd.mm.yyyy - add a phone/email/birthday to a contact\n"\
+           "note hashtag note - create a note with the specified hashtag\n"\
+           "change name new phone index - change the phone number at the specified index (if not specified, the first one will be changed)\n"\
+           "modify hashtag index new_note - modify the note with the specified hashtag and index\n"\
+           "search criteria - search for criteria among emails, phones, and names\n"\
+           "show all - show all contacts\n"\
+           "show notes - show all notes\n"\
+           "phone name - show all phone numbers for the specified name\n"\
+           "email name - show all emails for the specified name\n"\
+           "birthday name - show the birthday date with the number of days remaining\n"\
+           "page page_number number_of_contacts_per_page - show all contacts divided into pages, default is the first page with 3 contacts\n"\
+           "notes page_number number_of_hashtags - show all notes divided into pages, default is the first page with all notes of one hashtag"
 
 @input_error
 def add_user(name, contact_details):
@@ -322,8 +350,12 @@ def command_parser(user_input):
         if args:
             command_part2, *args = args[0].strip().split(' ', 1)
             command = command + ' ' + command_part2
-        handler = commands.get(command.lower(), unknown_command)
-
+        handler = commands.get(command.lower())
+        if handler is None:
+            user_input = change_command(user_input)
+            if user_input is None:
+                return unknown_command, args
+            return command_parser(user_input)
     if command == "modify":
         args = [args[0], args[1], ' '.join(args[2:])]
     elif command == "note":
