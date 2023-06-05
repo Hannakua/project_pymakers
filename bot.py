@@ -137,11 +137,14 @@ def update_user(record, contact_details):
         record.add_birthday(Birthday(contact_details))
     else:
         phone = Phone(contact_details)
-        # if phone.is_valid_phone():
         record.add_phone(phone)
-        # else:
-        #     return "Invalid phone number format"
     return "Contact details added successfully"
+
+@input_error
+def del_record(name: str):
+    user = phonebook.show_record(name)
+    phonebook.data.pop(name)
+    return f"Record for user {user} was deleted from addressbook."
 
 
 @input_error
@@ -277,7 +280,7 @@ def search_by_criteria(criteria: str, flag = None):
                 criteria = criteria.lower()
                 record_str = record_str.lower()          
             if record_str.find(criteria) >= 0:
-                result.append(record_str)
+                result.append(phonebook.show_record(user))
         for el in result:
             result_str += el +'\n'
         if result == []:
@@ -357,6 +360,7 @@ commands = {
     "notes": iteration_note,
     "modify": change_note,
     "find": find_user_adressbook,
+    "delete": del_record, 
 }
 
 filename1 = "address_book.txt"
