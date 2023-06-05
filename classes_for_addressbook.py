@@ -198,7 +198,6 @@ class AddressBook(UserDict):
 
     def show_record(self, name: str) -> str:    
             result = ''
-        # for name, record in self.data.items():
             record = self.get_records(name)
             result += f'{name}:'
             if record.phones:
@@ -211,7 +210,6 @@ class AddressBook(UserDict):
                 result += f' birthday: {record.birthday.value}'
                 days_left = record.days_to_birthday()
                 result += f' days to birthday: {days_left}'
-            # result += '\n'
             return result
 
     def load_address_book(self, filename):
