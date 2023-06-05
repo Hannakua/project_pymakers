@@ -3,20 +3,25 @@ from classes_for_notebook import Notebook, RecordNote, Hashtag
 
 phonebook = AddressBook()
 notebook = Notebook()
-
+cashe = ""
 
 def input_error(func):
     def inner(*args, **kwargs):
+        global cashe
         try:
             result = func(*args, **kwargs)
             return result
         except KeyError:
+            print(find_matching_lines(cashe))
             return "There is no such name"
         except ValueError as error:
+            print(find_matching_lines(cashe))
             return str(error)
         except IndexError:
+            print(find_matching_lines(cashe))
             return "Enter user name"
         except TypeError:
+            print(find_matching_lines(cashe))
             return "Incorrect values"
 
     return inner
@@ -28,15 +33,73 @@ def greeting():
 
 
 def unknown_command():
-    return "Unknown command"
+    return "Enter a new command"
 
+def change_command(user_input):
+    while True:
+        print(find_matching_lines(user_input))
+        choice = input('Unknown command. Do you want to change the command? \n(Yes/No): ')
+        
+        if choice.lower() == 'yes':
+            words = user_input.split(' ')
+            new_user_input = input('Repeat the command: ')
+            if len(words) == 1:
+                user_input = new_user_input + user_input[len(new_user_input)+1:]
+            elif len(words) >= 2:
+                user_input = ' '.join([new_user_input] + words[1:])
+            print(user_input)    
+            return user_input
+        elif choice.lower() == 'no':
+            return None
+        else:
+            print('Please enter "Yes" or "No".')
 
 @input_error
 def exit():
     return None
 
 def help():
-    return " add name 0*********/example@email.com/dd.mm.yyyy - додати телефон/емейл/дату народження до контакту name\nnote hashtag note - створити нотатку за вказаним хештегом\nchange name new phone index - змінити номер телефону за вказаним інтексом(якщо не вказувати то зміниться перший)\nmodify hashtag index new_note - змінює нотатку за вказанім хешегом та індексом\nsearch criteria - пошук за вказаною критерією серед емейлів, телефонів та імен\nshow all - показати всі контакти\nshow notes - показати всі нотатки\nphone name - показати всі номера телефонів за вказаним ім'ям\nemail name - показати всі емейли за вказаним ім'ям\nbirthday name - показати дату народження з кількість днів що залишилась до нього\npage page_number number_of_contacts_per_page - показати всі контакти розділені по сторінкам, стандартно перша сторінка та 3 контакти\nnotes page_number number_of_hashtags- показати всі нотатки розділені по сторінкам, стандартно перша сторінка та всі нотаки за одним хештегом"
+    return "add name 0*********/example@email.com/dd.mm.yyyy - add a phone/email/birthday to a contact\n"\
+           "note hashtag note - create a note with the specified hashtag\n"\
+           "change name new_phone index - change the phone number at the specified index (if not specified, the first one will be changed)\n"\
+           "modify hashtag index new_note - modify the note with the specified hashtag and index\n"\
+           "search criteria - search for criteria among emails, phones, and names\n"\
+           "show all - show all contacts\n"\
+           "show notes - show all notes\n"\
+           "phone name - show all phone numbers for the specified name\n"\
+           "email name - show all emails for the specified name\n"\
+           "birthday name - show the birthday date with the number of days remaining\n"\
+           "page page_number number_of_contacts_per_page - show all contacts divided into pages, default is the first page with 3 contacts\n"\
+           "notes page_number number_of_hashtags - show all notes divided into pages, default is the first page with all notes of one hashtag\n"\
+           "exit/good bye/close - shutdown/end program"
+
+
+def find_matching_lines(user_input):
+    matching_lines = []
+    help_text = help()
+
+    if user_input.strip():
+        words = user_input.split()
+        first_word = words[0]
+        second_word = words[1] if len(words) > 1 else None
+
+        for line in help_text.split('\n'):
+            if first_word.lower() in line.lower() and len(first_word) >= 3:
+                line = line.strip()
+                if line:
+                    matching_lines.append(line)
+        
+        if not matching_lines and second_word:
+            for line in help_text.split('\n'):
+                if second_word.lower() in line.lower() and len(second_word) >= 3:
+                    line = line.strip()
+                    if line:
+                        matching_lines.append(line)
+
+        if matching_lines:
+            matching_lines.insert(0, "Commands in this context:")
+
+    return '\n'.join(matching_lines) + '\n'
 
 @input_error
 def add_user(name, contact_details):
@@ -178,7 +241,7 @@ def get_birthday(name):
     else:
         return "There is no such name"
 
-
+@input_error
 def get_phone_number(name):
     record = phonebook.get_records(name)
     if record:
@@ -307,6 +370,8 @@ filename2 = "note_book.txt"
 
 def command_parser(user_input):
     command, *args = user_input.strip().split(' ')
+    if not command.strip():
+        return unknown_command, args
     try:
         handler = commands[command.lower()]
 
@@ -314,8 +379,12 @@ def command_parser(user_input):
         if args:
             command_part2, *args = args[0].strip().split(' ', 1)
             command = command + ' ' + command_part2
-        handler = commands.get(command.lower(), unknown_command)
-
+        handler = commands.get(command.lower())
+        if handler is None:
+            user_input = change_command(user_input)
+            if user_input is None:
+                return unknown_command, args
+            return command_parser(user_input)
     if command == "modify":
         args = [args[0], args[1], ' '.join(args[2:])]
     elif command == "note":
@@ -332,6 +401,10 @@ def main():
 
     while True:
         user_input = input(">>> ")
+
+        global cashe
+        cashe = user_input
+
         handler, args = command_parser(user_input)
         result = handler(*args)
 
