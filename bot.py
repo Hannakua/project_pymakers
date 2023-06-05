@@ -60,7 +60,7 @@ def exit():
 
 def help():
     return "add name 0*********/example@email.com/dd.mm.yyyy - add a phone/email/birthday to a contact\n"\
-           "note hashtag note - create a note with the specified hashtag\n"\
+           "note note_#hashtag_note - create a note with the specified hashtag(can be specified now or later)\n"\
            "change name new_phone index - change the phone number at the specified index (if not specified, the first one will be changed)\n"\
            "modify hashtag index new_note - modify the note with the specified hashtag and index\n"\
            "search criteria - search for criteria among emails, phones, and names\n"\
@@ -68,6 +68,7 @@ def help():
            "show notes - show all notes\n"\
            "phone name - show all phone numbers for the specified name\n"\
            "email name - show all emails for the specified name\n"\
+           "hashtag hashtag - displays all notes for the specified hashtag\n"\
            "birthday name - show the birthday date with the number of days remaining\n"\
            "page page_number number_of_contacts_per_page - show all contacts divided into pages, default is the first page with 3 contacts\n"\
            "notes page_number number_of_hashtags - show all notes divided into pages, default is the first page with all notes of one hashtag\n"\
@@ -119,16 +120,47 @@ def add_user(name, contact_details):
 
 
 @input_error
-def add_note(hashtag, note=None):
-    record = notebook.get_records(hashtag)
-    if record:
-        record.add_note(note)
-        return f'Note added to {hashtag} successfully'
-    else:
-        record = RecordNote(Hashtag(hashtag), note=note)
-        notebook.add_record(record)
-        return f'New {hashtag} added successfully'
+def add_note(note):
+    hashtags = extract_hashtags(note)
 
+    if not hashtags:
+        user_input = input("Please enter hashtags for the note: ")
+        user_input = user_input.strip()
+        if not user_input:
+            hashtags = ["#untagged"]
+        else:
+            hashtags = extract_hashtags(user_input)
+            if not hashtags:
+                hashtags = [user_input]
+
+
+    cleaned_note = remove_hashtags_from_note(note)
+
+    for hashtag in hashtags:
+        record = notebook.get_records(hashtag)
+        if record:
+            record.add_note(cleaned_note)
+        else:
+            record = RecordNote(Hashtag(hashtag), note=cleaned_note)
+            notebook.add_record(record)
+
+    return "Note added successfully"
+
+def extract_hashtags(text):
+    hashtags = []
+    words = text.split()
+    for word in words:
+        if word.startswith("#"):
+            hashtags.append(word)
+    return hashtags
+
+def remove_hashtags_from_note(note):
+    cleaned_note = note
+    hashtags = extract_hashtags(note)
+    for hashtag in hashtags:
+        cleaned_note = cleaned_note.replace(hashtag, "")
+    cleaned_note = cleaned_note.strip()
+    return cleaned_note
 
 def update_user(record, contact_details):
     if '@' in contact_details:
@@ -216,6 +248,8 @@ def show_notes(criteria=None):
 
 @input_error
 def get_note(hashtag):
+    if hashtag[0] != '#':
+            hashtag = '#' + hashtag
     record = notebook.get_records(hashtag)
     if record:
         notes = [f"{note}\n----------------------\n" for note in record.notes]
@@ -361,6 +395,7 @@ commands = {
     "modify": change_note,
     "find": find_user_adressbook,
     "delete": del_record, 
+    "hashtag": get_note,
 }
 
 filename1 = "address_book.txt"
@@ -388,7 +423,7 @@ def command_parser(user_input):
         args = [args[0], args[1], ' '.join(args[2:])]
     elif command == "note":
         try:
-            args = [args[0]] + [' '.join(args[1:])]
+            args = [' '.join(args)]
         except IndexError:
             pass
     return handler, args
