@@ -26,7 +26,7 @@ class Hashtag(Field):
     @Field.value.setter
     def value(self, hashtag):
         if hashtag[0] != '#':
-            raise ValueError('hashtag must be starts with #')
+            hashtag = '#' + hashtag
         if not re.match(r"^\#[\w\d]+$", hashtag):
             raise ValueError('Hashtag value is not right it can be only alphabet letters (a-z), numbers (0-9) and _')
         super(Hashtag, Hashtag).value.__set__(self, hashtag)
