@@ -133,6 +133,29 @@ def show_all():
 
 
 @input_error
+def find_user_adressbook(name):
+    if not phonebook.data:
+        return "The phonebook is empty"
+    result = ''
+    name = name.lower()
+    for user, record in phonebook.data.items():
+        if name == user.lower():
+            result += f'{user}:'
+            if record.phones:
+                phones = ', '.join([phone.value for phone in record.phones])
+                result += f' phones: {phones}'
+            if record.emails:
+                emails = ', '.join([email.value for email in record.emails])
+                result += f' emails: {emails}'
+            if record.birthday:
+                result += f' birthday: {record.birthday.value}'
+                days_left = record.days_to_birthday()
+                result += f' days to birthday: {days_left}'
+            result += '\n'
+    return result.rstrip()
+
+
+@input_error
 def show_notes(criteria=None):
     if not notebook.data:
         return "The notebook is empty"
@@ -307,6 +330,7 @@ commands = {
     "page": iteration,
     "notes": iteration_note,
     "modify": change_note,
+    "find": find_user_adressbook,
 }
 
 filename1 = "address_book.txt"
