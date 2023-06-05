@@ -183,6 +183,24 @@ class AddressBook(UserDict):
         with open(filename, 'wb') as file:
             pickle.dump(self.data, file)
 
+    def show_record(self, name: str) -> str:    
+            result = ''
+        # for name, record in self.data.items():
+            record = self.get_records(name)
+            result += f'{name}:'
+            if record.phones:
+                phones = ', '.join([phone.value for phone in record.phones])
+                result += f' phones: {phones}'
+            if record.emails:
+                emails = ', '.join([email.value for email in record.emails])
+                result += f' emails: {emails}'
+            if record.birthday:
+                result += f' birthday: {record.birthday.value}'
+                days_left = record.days_to_birthday()
+                result += f' days to birthday: {days_left}'
+            # result += '\n'
+            return result
+
     def load_address_book(self, filename):
         try:
             with open(filename, 'rb') as file:

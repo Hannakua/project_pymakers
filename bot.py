@@ -116,43 +116,24 @@ def show_all():
     if not phonebook.data:
         return "The phonebook is empty"
     result = ''
-    for name, record in phonebook.data.items():
-        result += f'{name}:'
-        if record.phones:
-            phones = ', '.join([phone.value for phone in record.phones])
-            result += f' phones: {phones}'
-        if record.emails:
-            emails = ', '.join([email.value for email in record.emails])
-            result += f' emails: {emails}'
-        if record.birthday:
-            result += f' birthday: {record.birthday.value}'
-            days_left = record.days_to_birthday()
-            result += f' days to birthday: {days_left}'
-        result += '\n'
+    for name in phonebook.data:
+        result += phonebook.show_record(name) + '\n'
     return result.rstrip()
 
 
 @input_error
-def find_user_adressbook(name):
+def find_user_adressbook(name: str, flag = None):
     if not phonebook.data:
         return "The phonebook is empty"
     result = ''
-    name = name.lower()
-    for user, record in phonebook.data.items():
-        if name == user.lower():
-            result += f'{user}:'
-            if record.phones:
-                phones = ', '.join([phone.value for phone in record.phones])
-                result += f' phones: {phones}'
-            if record.emails:
-                emails = ', '.join([email.value for email in record.emails])
-                result += f' emails: {emails}'
-            if record.birthday:
-                result += f' birthday: {record.birthday.value}'
-                days_left = record.days_to_birthday()
-                result += f' days to birthday: {days_left}'
-            result += '\n'
-    return result.rstrip()
+    if flag is None:
+        return phonebook.show_record(name)
+    else:
+        name = name.lower()
+        for user in phonebook.data:
+            if name == user.lower():
+                result += phonebook.show_record(user) + '\n'
+        return result.rstrip()
 
 
 @input_error
@@ -228,35 +209,22 @@ def get_email(name):
 
 
 @input_error
-def search_by_criteria(criteria):
+def search_by_criteria(criteria: str, flag = None):
     if criteria:
         result = []
-        for record in phonebook.data.values():
-            if criteria in record.get_name():
-                result.append(record)
-            elif any(criteria in email.value for email in record.emails):
-                result.append(record)
-            elif any(criteria in phone.value for phone in record.phones):
-                result.append(record)
-
-        if result:
-            result_strings = []
-            for record in result:
-                contact_info = f"{record.get_name()}"
-                if record.phones:
-                    phones = ", ".join([phone.value for phone in record.phones])
-                    contact_info += f": {phones}"
-                if record.emails:
-                    emails = ", ".join([email.value for email in record.emails])
-                    contact_info += f", Email: {emails}"
-                if record.get_birthday():
-                    contact_info += f", Birthday: {str(record.get_birthday().value)}"
-                    days_left = record.days_to_birthday()
-                    contact_info += f", Days to birthday: {days_left}"
-                result_strings.append(contact_info)
-            return "\n".join(result_strings)
-
-    return "No records found for that criteria"
+        result_str = ''
+        for user in phonebook.data:
+            record_str = phonebook.show_record(user)
+            if flag is not None:
+                criteria = criteria.lower()
+                record_str = record_str.lower()          
+            if record_str.find(criteria) >= 0:
+                result.append(record_str)
+        for el in result:
+            result_str += el +'\n'
+        if result == []:
+                return f'No records found for that criteria'
+        return result_str.rstrip()
 
 
 @input_error
