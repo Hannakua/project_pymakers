@@ -1,4 +1,4 @@
-import pickle
+import pickle, re
 from datetime import datetime
 from collections import UserDict
 
@@ -30,11 +30,17 @@ class Name(Field):
 
 
 class Phone(Field):
-    def __init__(self, value) -> None:
-        super().__init__(value)
 
-    def is_valid_phone(self):
-        return len(self.value) == 10 and self.value.isdigit()
+    def __init__(self, value) -> None:
+        self.value = value
+
+    @Field.value.setter
+    def value(self, value:str):
+        if value:
+            number = re.sub(r'\D', '', value)
+            if bool(re.search(r"^(38)?\d{10}$", number)) is not True:
+                raise ValueError("Phone number is invalid! Look for the necessary format phone number in help.")
+        Field.value.fset(self, number)
     
     def __repr__(self) -> str:
         return f"Phone({self.value})"
@@ -42,7 +48,14 @@ class Phone(Field):
 
 class Email(Field):
     def __init__(self, value) -> None:
-        super().__init__(value)
+        self.value = value
+
+    @Field.value.setter
+    def value(self, value:str):
+        if value:            
+            if bool(re.search(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", value)) is not True:
+                raise ValueError("Email is invalid! Look for the necessary format email in help.")
+        Field.value.fset(self, value)
 
     def __repr__(self) -> str:
         return f"Email({self.value})"
