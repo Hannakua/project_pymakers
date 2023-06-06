@@ -72,6 +72,7 @@ def help():
            "birthday name - show the birthday date with the number of days remaining\n"\
            "page page_number number_of_contacts_per_page - show all contacts divided into pages, default is the first page with 3 contacts\n"\
            "notes page_number number_of_hashtags - show all notes divided into pages, default is the first page with all notes of one hashtag\n"\
+           "delete name/#hashtag - clears a contact/hashtag by the specified name/hashtag\n"\
            "exit/good bye/close - shutdown/end program"
 
 
@@ -173,11 +174,12 @@ def update_user(record, contact_details):
     return "Contact details added successfully"
 
 @input_error
-def del_record(name: str):
-    user = phonebook.show_record(name)
-    phonebook.data.pop(name)
-    return f"Record for user {user} was deleted from addressbook."
-
+def del_record(key: str):
+    if '#' in key:
+        notebook.data.pop(key)
+        return f"Record for hashtag {key} was deleted from notebook."
+    phonebook.data.pop(key)
+    return f"Record for user {key} was deleted from addressbook."
 
 @input_error
 def change_phone(name, new_phone, index=0):
