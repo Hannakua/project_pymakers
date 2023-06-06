@@ -1,9 +1,13 @@
+from pathlib import Path
 from classes_for_addressbook import Record, AddressBook, Name, Email, Birthday, Phone
 from classes_for_notebook import Notebook, RecordNote, Hashtag
+from sort_dir import sort_dir
+
 
 phonebook = AddressBook()
 notebook = Notebook()
 cashe = ""
+
 
 def input_error(func):
     def inner(*args, **kwargs):
@@ -35,45 +39,52 @@ def greeting():
 def unknown_command():
     return "Enter a new command"
 
+
 def change_command(user_input):
     while True:
         print(find_matching_lines(user_input))
-        choice = input('Unknown command. Do you want to change the command? \n(Yes/No): ')
-        
-        if choice.lower() == 'yes':
-            words = user_input.split(' ')
-            new_user_input = input('Repeat the command: ')
+        choice = input(
+            "Unknown command. Do you want to change the command? \n(Yes/No): "
+        )
+
+        if choice.lower() == "yes":
+            words = user_input.split(" ")
+            new_user_input = input("Repeat the command: ")
             if len(words) == 1:
-                user_input = new_user_input + user_input[len(new_user_input)+1:]
+                user_input = new_user_input + user_input[len(new_user_input) + 1 :]
             elif len(words) >= 2:
-                user_input = ' '.join([new_user_input] + words[1:])
-            print(user_input)    
+                user_input = " ".join([new_user_input] + words[1:])
+            print(user_input)
             return user_input
-        elif choice.lower() == 'no':
+        elif choice.lower() == "no":
             return None
         else:
             print('Please enter "Yes" or "No".')
+
 
 @input_error
 def exit():
     return None
 
+
 def help():
-    return "add name 0*********/example@email.com/dd.mm.yyyy - add a phone/email/birthday to a contact\n"\
-           "note note_#hashtag_note - create a note with the specified hashtag(can be specified now or later)\n"\
-           "change name new_phone index - change the phone number at the specified index (if not specified, the first one will be changed)\n"\
-           "modify hashtag index new_note - modify the note with the specified hashtag and index\n"\
-           "search criteria - search for criteria among emails, phones, and names\n"\
-           "show all - show all contacts\n"\
-           "show notes - show all notes\n"\
-           "phone name - show all phone numbers for the specified name\n"\
-           "email name - show all emails for the specified name\n"\
-           "hashtag hashtag - displays all notes for the specified hashtag\n"\
-           "birthday name - show the birthday date with the number of days remaining\n"\
-           "page page_number number_of_contacts_per_page - show all contacts divided into pages, default is the first page with 3 contacts\n"\
-           "notes page_number number_of_hashtags - show all notes divided into pages, default is the first page with all notes of one hashtag\n"\
-           "delete name/#hashtag - clears a contact/hashtag by the specified name/hashtag\n"\
-           "exit/good bye/close - shutdown/end program"
+    return (
+        "add name 0*********/example@email.com/dd.mm.yyyy - add a phone/email/birthday to a contact\n"
+        "note note_#hashtag_note - create a note with the specified hashtag(can be specified now or later)\n"
+        "change name new_phone index - change the phone number at the specified index (if not specified, the first one will be changed)\n"
+        "modify hashtag index new_note - modify the note with the specified hashtag and index\n"
+        "search criteria - search for criteria among emails, phones, and names\n"
+        "show all - show all contacts\n"
+        "show notes - show all notes\n"
+        "phone name - show all phone numbers for the specified name\n"
+        "email name - show all emails for the specified name\n"
+        "hashtag hashtag - displays all notes for the specified hashtag\n"
+        "birthday name - show the birthday date with the number of days remaining\n"
+        "page page_number number_of_contacts_per_page - show all contacts divided into pages, default is the first page with 3 contacts\n"
+        "notes page_number number_of_hashtags - show all notes divided into pages, default is the first page with all notes of one hashtag\n"
+        "delete name/#hashtag - clears a contact/hashtag by the specified name/hashtag\n"
+        "exit/good bye/close - shutdown/end program"
+    )
 
 
 def find_matching_lines(user_input):
@@ -85,14 +96,14 @@ def find_matching_lines(user_input):
         first_word = words[0]
         second_word = words[1] if len(words) > 1 else None
 
-        for line in help_text.split('\n'):
+        for line in help_text.split("\n"):
             if first_word.lower() in line.lower() and len(first_word) >= 3:
                 line = line.strip()
                 if line:
                     matching_lines.append(line)
-        
+
         if not matching_lines and second_word:
-            for line in help_text.split('\n'):
+            for line in help_text.split("\n"):
                 if second_word.lower() in line.lower() and len(second_word) >= 3:
                     line = line.strip()
                     if line:
@@ -101,7 +112,8 @@ def find_matching_lines(user_input):
         if matching_lines:
             matching_lines.insert(0, "Commands in this context:")
 
-    return '\n'.join(matching_lines) + '\n'
+    return "\n".join(matching_lines) + "\n"
+
 
 @input_error
 def add_user(name, contact_details):
@@ -109,9 +121,9 @@ def add_user(name, contact_details):
     if record:
         return update_user(record, contact_details)
     else:
-        if '@' in contact_details:
+        if "@" in contact_details:
             record = Record(Name(name), email=Email(contact_details))
-        elif '.' in contact_details:
+        elif "." in contact_details:
             record = Record(Name(name), birthday=Birthday(contact_details))
         else:
             phone = Phone(contact_details)
@@ -134,7 +146,6 @@ def add_note(note):
             if not hashtags:
                 hashtags = [user_input]
 
-
     cleaned_note = remove_hashtags_from_note(note)
 
     for hashtag in hashtags:
@@ -147,6 +158,7 @@ def add_note(note):
 
     return "Note added successfully"
 
+
 def extract_hashtags(text):
     hashtags = []
     words = text.split()
@@ -154,6 +166,7 @@ def extract_hashtags(text):
         if word.startswith("#"):
             hashtags.append(word)
     return hashtags
+
 
 def remove_hashtags_from_note(note):
     cleaned_note = note
@@ -163,30 +176,35 @@ def remove_hashtags_from_note(note):
     cleaned_note = cleaned_note.strip()
     return cleaned_note
 
+
 def update_user(record, contact_details):
-    if '@' in contact_details:
+    if "@" in contact_details:
         record.add_email(Email(contact_details))
-    elif '.' in contact_details:
+    elif "." in contact_details:
         record.add_birthday(Birthday(contact_details))
     else:
         phone = Phone(contact_details)
         record.add_phone(phone)
     return "Contact details added successfully"
 
+
 @input_error
 def del_record(key: str):
-    if '#' in key:
+    if "#" in key:
         notebook.data.pop(key)
         return f"Record for hashtag {key} was deleted from notebook."
     phonebook.data.pop(key)
     return f"Record for user {key} was deleted from addressbook."
 
+
 @input_error
 def change_phone(name, new_phone, index=0):
     record = phonebook.get_records(name)
     if record:
-        if record.phones and '0' <= str(index) < str(len(record.phones)):
-            record.edit_phone(old_phone=record.phones[int(index)].value, new_phone=new_phone)
+        if record.phones and "0" <= str(index) < str(len(record.phones)):
+            record.edit_phone(
+                old_phone=record.phones[int(index)].value, new_phone=new_phone
+            )
             return "Phone number updated successfully"
         else:
             return "Invalid phone number index"
@@ -197,7 +215,7 @@ def change_phone(name, new_phone, index=0):
 def change_note(hashtag, index, new_note):
     record = notebook.get_records(hashtag)
     if record:
-        if record.notes and '0' <= str(index) < str(len(record.notes)):
+        if record.notes and "0" <= str(index) < str(len(record.notes)):
             record.edit_note(old_note=record.notes[int(index)].value, new_note=new_note)
             return "Note updated successfully"
         else:
@@ -210,24 +228,24 @@ def change_note(hashtag, index, new_note):
 def show_all():
     if not phonebook.data:
         return "The phonebook is empty"
-    result = ''
+    result = ""
     for name in phonebook.data:
-        result += phonebook.show_record(name) + '\n'
+        result += phonebook.show_record(name) + "\n"
     return result.rstrip()
 
 
 @input_error
-def find_user_adressbook(name: str, flag = None):
+def find_user_adressbook(name: str, flag=None):
     if not phonebook.data:
         return "The phonebook is empty"
-    result = ''
+    result = ""
     if flag is None:
         return phonebook.show_record(name)
     else:
         name = name.lower()
         for user in phonebook.data:
             if name == user.lower():
-                result += phonebook.show_record(user) + '\n'
+                result += phonebook.show_record(user) + "\n"
         return result.rstrip()
 
 
@@ -242,16 +260,16 @@ def show_notes(criteria=None):
     if not records:
         return "No note records found for " + criteria
 
-    result = ''
+    result = ""
     for record in records:
-        result += str(record) + '\n'
+        result += str(record) + "\n"
     return result
 
 
 @input_error
 def get_note(hashtag):
-    if hashtag[0] != '#':
-            hashtag = '#' + hashtag
+    if hashtag[0] != "#":
+        hashtag = "#" + hashtag
     record = notebook.get_records(hashtag)
     if record:
         notes = [f"{note}\n----------------------\n" for note in record.notes]
@@ -274,6 +292,7 @@ def get_birthday(name):
             return "No birthday found for that name"
     else:
         return "There is no such name"
+
 
 @input_error
 def get_phone_number(name):
@@ -306,21 +325,21 @@ def get_email(name):
 
 
 @input_error
-def search_by_criteria(criteria: str, flag = None):
+def search_by_criteria(criteria: str, flag=None):
     if criteria:
         result = []
-        result_str = ''
+        result_str = ""
         for user in phonebook.data:
             record_str = phonebook.show_record(user)
             if flag is not None:
                 criteria = criteria.lower()
-                record_str = record_str.lower()          
+                record_str = record_str.lower()
             if record_str.find(criteria) >= 0:
                 result.append(phonebook.show_record(user))
         for el in result:
-            result_str += el +'\n'
+            result_str += el + "\n"
         if result == []:
-                return f'No records found for that criteria'
+            return f"No records found for that criteria"
         return result_str.rstrip()
 
 
@@ -344,7 +363,9 @@ def iteration_note(page=1, count_hashtag=1):
     for record in records[start_index:end_index]:
         result += f"{record.hashtag}:\n"
         if record.notes:
-            notes = "\n".join([f"{note.value}\n---------------------" for note in record.notes])
+            notes = "\n".join(
+                [f"{note.value}\n---------------------" for note in record.notes]
+            )
             result += f"\n{notes}\n"
 
     result += f"Page {page}/{total_pages}"
@@ -377,35 +398,40 @@ def iteration(page=1, page_size=3):
     return result.rstrip()
 
 
+def sorting_directory(folder):
+    return sort_dir(Path(folder).resolve())
+
+
 commands = {
-    'hello': greeting,
-    'help': help,
-    'add': add_user,
+    "hello": greeting,
+    "help": help,
+    "add": add_user,
     "note": add_note,
-    'change': change_phone,
-    'show all': show_all,
-    'show notes': show_notes,
+    "change": change_phone,
+    "show all": show_all,
+    "show notes": show_notes,
     "phone": get_phone_number,
-    'exit': exit,
-    'good bye': exit,
-    'close': exit,
+    "exit": exit,
+    "good bye": exit,
+    "close": exit,
     "email": get_email,
     "birthday": get_birthday,
-    'search': search_by_criteria,
+    "search": search_by_criteria,
     "page": iteration,
     "notes": iteration_note,
     "modify": change_note,
     "find": find_user_adressbook,
-    "delete": del_record, 
+    "delete": del_record,
     "hashtag": get_note,
+    "sort": sorting_directory,
 }
 
-filename1 = "address_book.txt"
-filename2 = "note_book.txt"
+filename1 = "address_book.bin"
+filename2 = "note_book.bin"
 
 
 def command_parser(user_input):
-    command, *args = user_input.strip().split(' ')
+    command, *args = user_input.strip().split(" ")
     if not command.strip():
         return unknown_command, args
     try:
@@ -413,8 +439,8 @@ def command_parser(user_input):
 
     except KeyError:
         if args:
-            command_part2, *args = args[0].strip().split(' ', 1)
-            command = command + ' ' + command_part2
+            command_part2, *args = args[0].strip().split(" ", 1)
+            command = command + " " + command_part2
         handler = commands.get(command.lower())
         if handler is None:
             user_input = change_command(user_input)
@@ -422,10 +448,10 @@ def command_parser(user_input):
                 return unknown_command, args
             return command_parser(user_input)
     if command == "modify":
-        args = [args[0], args[1], ' '.join(args[2:])]
+        args = [args[0], args[1], " ".join(args[2:])]
     elif command == "note":
         try:
-            args = [' '.join(args)]
+            args = [" ".join(args)]
         except IndexError:
             pass
     return handler, args
@@ -445,7 +471,7 @@ def main():
         result = handler(*args)
 
         if not result:
-            print('Goodbye!')
+            print("Goodbye!")
             phonebook.save_address_book(filename1)
             notebook.save_notes(filename2)
             break

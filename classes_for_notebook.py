@@ -25,10 +25,12 @@ class Hashtag(Field):
 
     @Field.value.setter
     def value(self, hashtag):
-        if hashtag[0] != '#':
-            hashtag = '#' + hashtag
+        if hashtag[0] != "#":
+            hashtag = "#" + hashtag
         if not re.match(r"^\#[\w\d]+$", hashtag):
-            raise ValueError('Hashtag value is not right it can be only alphabet letters (a-z), numbers (0-9) and _')
+            raise ValueError(
+                "Hashtag value is not right it can be only alphabet letters (a-z), numbers (0-9) and _"
+            )
         super(Hashtag, Hashtag).value.__set__(self, hashtag)
 
     def __repr__(self) -> str:
@@ -53,7 +55,7 @@ class RecordNote:
         elif isinstance(note, Note):
             self.notes.append(note)
         else:
-            raise ValueError('New note is not string value or Note() object')
+            raise ValueError("New note is not string value or Note() object")
 
     def edit_note(self, old_note, new_note):
         for note in self.notes:
@@ -62,26 +64,34 @@ class RecordNote:
                 return note
 
     def show(self):
+        result = []
         for note in self.notes:
-            print(note)
+            result.append(note.value)
+        return result
 
     def get_hashtag(self):
-        return self.hashtag.value
+        if isinstance(self.hashtag, Hashtag):
+            return self.hashtag.value
+        else:
+            return self.hashtag
 
     def get_note_by_index(self, index):
-        if self.notes and index < len(self.notes):
-            return self.notes[index]
-        else:
-            return None
+        try:
+            if self.notes:
+                return self.notes[index].value
+        except:
+            raise IndexError
 
     def __str__(self):
         result = self.hashtag.value
         if self.notes:
-            result += ': ' + ', '.join([note.value for note in self.notes])
+            result += ": " + ", ".join([note.value for note in self.notes])
         return result
 
     def __repr__(self):
-        return f"Record({self.hashtag!r}, {self.notes!r})"
+        if self.notes:
+            notes_list=', '.join([note.value for note in self.notes])
+            return f"Record({self.hashtag.value}, {notes_list})"
 
 
 class Notebook(UserDict):
@@ -138,7 +148,7 @@ class Notebook(UserDict):
             raise StopIteration
 
     def __str__(self):
-        result = ''
+        result = ""
         for tag in self.data:
-            result += str(self.data[tag]) + '\n'
+            result += str(self.data[tag]) + "\n"
         return result
