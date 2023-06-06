@@ -80,6 +80,7 @@ def help():
         "email name - show all emails for the specified name\n"
         "hashtag hashtag - displays all notes for the specified hashtag\n"
         "birthday name - show the birthday date with the number of days remaining\n"
+        "birthdays - displays a list of contacts whose birthday is a specified number of days from the current date(standard 7 days)\n"\
         "page page_number number_of_contacts_per_page - show all contacts divided into pages, default is the first page with 3 contacts\n"
         "notes page_number number_of_hashtags - show all notes divided into pages, default is the first page with all notes of one hashtag\n"
         "delete name/#hashtag - clears a contact/hashtag by the specified name/hashtag\n"
@@ -293,6 +294,25 @@ def get_birthday(name):
     else:
         return "There is no such name"
 
+def remaining_days(days=7):
+    upcoming_birthdays = []
+    result = ""
+    for record in phonebook.data.values():
+        name = record.get_name()
+        birthday = record.get_birthday()
+
+        if birthday is not None:
+            days_left = record.days_to_birthday()
+            if days_left is not None and days_left <= int(days):
+                upcoming_birthdays.append((name, birthday.value, days_left))
+
+    if len(upcoming_birthdays) == 0:
+        result = "No upcoming birthdays in the next few days."
+    else:
+        for name, birthday, days_left in upcoming_birthdays:
+            result += f"{name}: birthday: {birthday} days to birthday: {days_left}\n"
+
+    return result.rstrip()
 
 @input_error
 def get_phone_number(name):
@@ -416,6 +436,7 @@ commands = {
     "close": exit,
     "email": get_email,
     "birthday": get_birthday,
+    "birthdays": remaining_days,
     "search": search_by_criteria,
     "page": iteration,
     "notes": iteration_note,
