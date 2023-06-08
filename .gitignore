@@ -1,4 +1,7 @@
 .idea
 __pycache__
-pyenv
+pyenv*
 *.bin
+dist/
+build/
+src/project_pymakers.egg-info

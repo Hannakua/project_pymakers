@@ -80,7 +80,7 @@ def help():
         "email name - show all emails for the specified name\n"
         "hashtag hashtag - displays all notes for the specified hashtag\n"
         "birthday name - show the birthday date with the number of days remaining\n"
-        "birthdays - displays a list of contacts whose birthday is a specified number of days from the current date(standard 7 days)\n"\
+        "birthdays - displays a list of contacts whose birthday is a specified number of days from the current date(standard 7 days)\n"
         "page page_number number_of_contacts_per_page - show all contacts divided into pages, default is the first page with 3 contacts\n"
         "notes page_number number_of_hashtags - show all notes divided into pages, default is the first page with all notes of one hashtag\n"
         "delete name/#hashtag - clears a contact/hashtag by the specified name/hashtag\n"
@@ -294,6 +294,7 @@ def get_birthday(name):
     else:
         return "There is no such name"
 
+
 def remaining_days(days=7):
     upcoming_birthdays = []
     result = ""
@@ -313,6 +314,7 @@ def remaining_days(days=7):
             result += f"{name}: birthday: {birthday} days to birthday: {days_left}\n"
 
     return result.rstrip()
+
 
 @input_error
 def get_phone_number(name):

@@ -1,4 +1,4 @@
-import classes_for_notebook as notes
+import pymakers.classes_for_notebook as notes
 import pytest
 
 
