@@ -468,9 +468,9 @@ def command_parser(user_input):
             if user_input is None:
                 return unknown_command, args
             return command_parser(user_input)
-    if command == "modify":
+    if command.lower() == "modify":
         args = [args[0], args[1], " ".join(args[2:])]
-    elif command == "note":
+    elif command.lower() == "note":
         try:
             args = [" ".join(args)]
         except IndexError:
